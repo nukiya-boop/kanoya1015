@@ -20,6 +20,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 FONTS = os.path.join(HERE, "fonts")
 OUT = os.path.join(HERE, "shikanoya_reel.mp4")
+MUSIC = os.path.join(HERE, "music", "Paper_Screens_and_Starlight.mp3")
 
 W, H, FPS, DUR = 1080, 1920, 30, 30.0
 NF = int(FPS * DUR)
@@ -42,8 +43,8 @@ SLIDES = [
     ("7C1A5472.jpg", "障子あかり", "SHOJI GLOW", "diag"),
     ("7C1A5475.jpg", "宵の庭", "TWILIGHT GARDEN", "frame"),
 ]
-SLOT0, SLOT, TR = 2.8, 3.0, 1.0
-OUTRO = SLOT0 + SLOT * len(SLIDES)  # 26.8s
+SLOT0, SLOT, TR = 3.0, 3.0, 1.0   # 曲のフレーズ (6秒ごと) に切り替えを合わせる
+OUTRO = SLOT0 + SLOT * len(SLIDES)  # 27.0s
 
 
 def font(name, size):
@@ -192,10 +193,10 @@ def build_assets():
     A["brand"] = text_img("SHIKANOYA", font(CORM_M, 30), GOLD + (255,), 14)
     # アウトロ
     A["out"] = [
-        (text_img("奈良春日の森", font(MINCHO, 40), CREAM + (255,), 16), 690, 27.0),
-        (text_img("鹿のや", font(MINCHO_M, 124), CREAM + (255,), 34), 760, 27.25),
-        (text_img("SHIKANOYA", font(CORM_M, 34), GOLD + (255,), 18), 965, 27.5),
-        (text_img("庭を望むラウンジで、静かな夜を。", font(MINCHO, 36), CREAM + (255,), 6), 1090, 27.9),
+        (text_img("奈良春日の森", font(MINCHO, 40), CREAM + (255,), 16), 690, 27.2),
+        (text_img("鹿のや", font(MINCHO_M, 124), CREAM + (255,), 34), 760, 27.45),
+        (text_img("SHIKANOYA", font(CORM_M, 34), GOLD + (255,), 18), 965, 27.7),
+        (text_img("庭を望むラウンジで、静かな夜を。", font(MINCHO, 36), CREAM + (255,), 6), 1090, 28.1),
     ]
     A["grain"] = [rng.integers(-3, 4, (H, W, 3), dtype=np.int16) for _ in range(6)]
     return A
@@ -299,7 +300,7 @@ def render(fi):
     # 背景 (ぼかした写真)
     k = max([i for i in range(len(SLIDES)) if t >= slot_start(i) - TR / 2] or [0])
     if k == 0:
-        canvas.alpha_composite(fade(A["slides"][0]["bg"], 0.55 * ease(t / 1.6) + 0.45 * ease((t - 2.3) / TR)))
+        canvas.alpha_composite(fade(A["slides"][0]["bg"], 0.55 * ease(t / 1.6) + 0.45 * ease((t - 2.5) / TR)))
     else:
         canvas.alpha_composite(A["slides"][k - 1]["bg"])
         canvas.alpha_composite(fade(A["slides"][k]["bg"], ease((t - slot_start(k) + TR / 2) / TR)))
@@ -335,7 +336,7 @@ def render(fi):
     canvas.alpha_composite(ov)
 
     # 上部ブランド表記
-    ba = ease((t - 2.6) / 0.8) * (1 - ease((t - OUTRO + 0.5) / 0.6))
+    ba = ease((t - 2.8) / 0.8) * (1 - ease((t - OUTRO + 0.5) / 0.6))
     if ba > 0:
         b = A["brand"]
         paste_c(canvas, b, W / 2, 128, ba * 0.9)
@@ -346,8 +347,8 @@ def render(fi):
         d.line((W / 2 + b.width / 2 + 14, y, W / 2 + b.width / 2 + 70, y), fill=col, width=1)
 
     # イントロ (縦書き)
-    if t < 3.0:
-        io = 1 - ease((t - 2.15) / 0.55)
+    if t < 3.2:
+        io = 1 - ease((t - 2.35) / 0.55)
         for c, (col, x, y0, t0) in enumerate(zip(A["intro_cols"], (600, 470), (350, 446), (0.25, 0.95))):
             for k, ch in enumerate(col):
                 p = ease_out((t - t0 - k * 0.07) / 0.7)
@@ -364,7 +365,7 @@ def render(fi):
         for im, y, t0 in A["out"]:
             p = ease_out((t - t0) / 0.9)
             paste_c(canvas, im, W / 2, y + 14 * (1 - p), p)
-        p = ease((t - 27.6) / 0.9)
+        p = ease((t - 27.8) / 0.9)
         if p > 0:
             for yl in (655, 1050):
                 d.line((W / 2 - 90 * p, yl, W / 2 + 90 * p, yl), fill=GOLD + (int(200 * p),), width=1)
@@ -380,6 +381,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--preview", help="カンマ区切りの秒数。PNG を書き出して終了")
     ap.add_argument("--out", default=OUT)
+    ap.add_argument("--music", default=MUSIC, help="BGM。空文字なら無音")
     args = ap.parse_args()
     ASSETS = build_assets()
 
@@ -391,9 +393,11 @@ def main():
 
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-           "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-shortest",
+           *(["-i", args.music] if args.music else ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"]),
+           "-af", f"loudnorm=I=-15:TP=-1.5:LRA=11,afade=t=in:d=0.3,afade=t=out:st={DUR - 2.8}:d=2.8,atrim=0:{DUR}",
+           "-t", str(DUR),
            "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-pix_fmt", "yuv420p",
-           "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", args.out]
+           "-profile:v", "high", "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-movflags", "+faststart", args.out]
     ff = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     with Pool(os.cpu_count()) as pool:
         for k, buf in enumerate(pool.imap(render, range(NF), chunksize=6)):
