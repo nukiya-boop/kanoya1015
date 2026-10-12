@@ -396,7 +396,7 @@ def main():
            *(["-i", args.music] if args.music else ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"]),
            "-af", f"loudnorm=I=-15:TP=-1.5:LRA=11,afade=t=in:d=0.3,afade=t=out:st={DUR - 2.8}:d=2.8,atrim=0:{DUR}",
            "-t", str(DUR),
-           "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-pix_fmt", "yuv420p",
+           "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p",
            "-profile:v", "high", "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-movflags", "+faststart", args.out]
     ff = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     with Pool(os.cpu_count()) as pool:
