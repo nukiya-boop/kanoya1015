@@ -4,7 +4,7 @@
 写真は一切トリミングせず、額装した「夜の画廊」のように一枚ずつ見せる。
 
 使い方:
-    python3 instagram/make_reel.py                    # instagram/shikanoya_reel.mp4 を出力
+    python3 instagram/make_reel.py                    # instagram/kanoya_reel.mp4 を出力
     python3 instagram/make_reel.py --preview 1,5,12   # 指定秒のフレームを PNG で確認
 """
 import argparse
@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 FONTS = os.path.join(HERE, "fonts")
-OUT = os.path.join(HERE, "shikanoya_reel.mp4")
+OUT = os.path.join(HERE, "kanoya_reel.mp4")
 MUSIC = os.path.join(HERE, "music", "Paper_Screens_and_Starlight.mp3")
 
 W, H, FPS, DUR = 1080, 1920, 30, 30.0
@@ -189,13 +189,13 @@ def build_assets():
     f = font(MINCHO, 70)
     A["intro_cols"] = [[text_img(c, f, CREAM + (255,)) for c in col] for col in ("まるで絵画のような", "夜の庭をめぐる")]
     A["intro_sub1"] = text_img("奈良春日の森　鹿のや", font(MINCHO, 34), CREAM + (255,), 8)
-    A["intro_sub2"] = text_img("NARA KASUGA NO MORI  SHIKANOYA", font(CORM, 24), GOLD + (255,), 7)
-    A["brand"] = text_img("SHIKANOYA", font(CORM_M, 30), GOLD + (255,), 14)
+    A["intro_sub2"] = text_img("NARA KASUGA NO MORI  KANOYA", font(CORM, 24), GOLD + (255,), 7)
+    A["brand"] = text_img("KANOYA", font(CORM_M, 30), GOLD + (255,), 14)
     # アウトロ
     A["out"] = [
         (text_img("奈良春日の森", font(MINCHO, 40), CREAM + (255,), 16), 690, 27.2),
         (text_img("鹿のや", font(MINCHO_M, 124), CREAM + (255,), 34), 760, 27.45),
-        (text_img("SHIKANOYA", font(CORM_M, 34), GOLD + (255,), 18), 965, 27.7),
+        (text_img("KANOYA", font(CORM_M, 34), GOLD + (255,), 18), 965, 27.7),
         (text_img("庭を望むラウンジで、静かな夜を。", font(MINCHO, 36), CREAM + (255,), 6), 1090, 28.1),
     ]
     A["grain"] = [rng.integers(-3, 4, (H, W, 3), dtype=np.int16) for _ in range(6)]
